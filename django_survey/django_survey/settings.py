@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'survey.apps.SurveyConfig',
     'widget_tweaks',
+    'guardian',
 ]
 
 MIDDLEWARE = [
@@ -49,6 +50,11 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+
+AUTHENTICATION_BACKENDS = [
+  'django.contrib.auth.backends.ModelBackend',
+  'guardian.backends.ObjectPermissionBackend',
 ]
 
 ROOT_URLCONF = 'django_survey.urls'

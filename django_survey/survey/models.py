@@ -15,6 +15,12 @@ class Survey(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        permissions = (
+          # ('view_survey', 'View survey'),
+          ('view_results', 'View survey results'),
+        )
+
     def __str__(self):
         return f"<Survey: {self.id} {self.title}>"
 
@@ -69,6 +75,9 @@ class SurveyAssignment(models.Model):
         blank=True,
         related_name='assigned_surveys'
     )
+
+    def __str__(self):
+        return f"{self.survey.title}: {self.assigned_to.username}"
 
 
 class SurveyResponse(models.Model):

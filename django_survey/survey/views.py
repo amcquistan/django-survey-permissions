@@ -11,6 +11,8 @@ from django.shortcuts import render, redirect, reverse
 
 from django.views import View
 
+from guardian.shortcuts import assign_perm
+
 from .models import Survey, Question, Choice, SurveyAssignment
 
 class RegisterView(View):
@@ -138,6 +140,7 @@ class SurveyCreateView(LoginRequiredMixin, View):
                 assigned_by=request.user,
                 assigned_to=assigned_to
             )
+            assign_perm('view_survey', assigned_to, survey)
 
         return redirect(reverse('profile'))
 
