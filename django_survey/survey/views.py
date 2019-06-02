@@ -91,7 +91,7 @@ class ProfileView(LoginRequiredMixin, View):
 
         context = {
           'surveys': surveys,
-          'assigned_surveys': assigned_surveys
+          'assgined_surveys': assigned_surveys
         }
 
         return render(request, 'survey/profile.html', context)

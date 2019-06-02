@@ -30,7 +30,7 @@
         <div class="content">
           <ul>
             {% for assigned_survey in assgined_surveys %}
-            <li><a href=""></a></li>
+            <li><a href=""></a>{{ assigned_survey.survey.title }}</li>
             {% endfor %}
           </ul>
         </div>
