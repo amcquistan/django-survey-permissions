@@ -437,7 +437,7 @@ While I'm doing template work I should add in a simple profile.html template tha
         <div class="content">
           <ul>
             {% for assigned_survey in assgined_surveys %}
-            <li><a href=""></a></li>
+            <li><a href=""></a>{{ assigned_survey.survey.title }}</li>
             {% endfor %}
           </ul>
         </div>
