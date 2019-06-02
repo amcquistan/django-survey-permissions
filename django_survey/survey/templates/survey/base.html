@@ -1,0 +1,61 @@
+<!-- base.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Django Survey</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.5/css/bulma.css">
+  <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
+</head>
+<body>
+  <nav class="navbar" role="navigation" aria-label="main navigation">
+    <div class="navbar-brand">
+      <a class="navbar-item" href="/">
+        Django Survey
+      </a>
+  
+      <a role="button" class="navbar-burger burger" aria-label="menu" aria-expanded="false" data-target="navbarBasicExample">
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+      </a>
+    </div>
+
+    <div id="navbar-menu" class="navbar-menu">
+      {% if request.user.is_authenticated %}
+      <div class="navbar-start">
+        <a class="navbar-item" href="{% url 'profile' %}">
+          Profile
+        </a>
+        <a class="navbar-item" href="{% url 'survey_create' %}">
+          Create Survey
+        </a>
+      </div>
+      {% endif %}
+
+      <div class="navbar-end">
+        <div class="navbar-item">
+          {% if request.user.is_authenticated %}
+          <a class="button is-info" href="{% url 'logout' %}">Logout</a>
+          {% else %}
+          <div class="buttons">
+            <a class="button is-primary" href="{% url 'register' %}">
+              <strong>Sign up</strong>
+            </a>
+            <a class="button is-light" href="{% url 'login' %}">
+              Log in
+            </a>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  {% block content %}
+
+  {% endblock %}
+</body>
+</html>

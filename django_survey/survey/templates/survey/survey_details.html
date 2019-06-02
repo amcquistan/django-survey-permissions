@@ -1,0 +1,106 @@
+{% extends 'survey/base.html' %}
+{% load widget_tweaks %}
+
+{% block content %}
+
+<section class="section">
+  <div class="container">
+    <h1 class="title has-text-centered">
+      Django Survey
+    </h1>
+
+    <div class="columns">
+      <div class="column is-offset-2 is-8">
+        <h2 class="subtitle">
+          Survey Details: {{ survey.title }}
+        </h2>
+
+        <ul>
+          {% for survey_assignment in survey_assigments %}
+
+          {% endfor %}
+        </ul>
+
+      </div>
+    </div>
+
+  </div>
+
+</section>
+
+<script>
+new Vue({
+  delimiters: ['[[', ']]'],
+  el: '#survey-form',
+  data: {
+    questionId: 1,
+    choiceId: 1,
+    questions: []
+  },
+  methods: {
+    addQuestion: function() {
+      var _this = this;
+      _this.questions.push({
+        id: _this.questionId,
+        text: '',
+        choices: [{
+          id: _this.choiceId,
+          text: ''
+        }]
+      });
+      _this.questionId++;
+      _this.choiceId++;
+    },
+    removeQuestion: function(question) {
+      var questions = this.questions.slice();
+      var idx = questions.indexOf(question);
+      questions.splice(idx, 1)
+      this.questions = questions;
+    },
+    addChoice: function(question) {
+      var _this = this;
+      question.choices.push({
+        id: _this.choiceId,
+        text: ''
+      });
+      var idx = _this.questions.indexOf(question);
+      var questions = _this.questions.slice();
+      questions[idx] = question;
+      _this.questions = questions;
+      _this.choiceId++;
+    },
+    removeChoice: function(question, choice) {
+      var questions = this.questions.slice();
+      var qIdx = questions.indexOf(question);
+      var cIdx = question.choices.indexOf(choice);
+      question.choices.splice(cIdx, 1);
+      questions[qIdx] = question;
+      this.questions = questions;
+    },
+    serializeQuestion: function(question) {
+      var q = Object.assign({}, question);
+      q.choices = q.choices.filter(function(c){
+        return Boolean(c.text);
+      });
+      return JSON.stringify(q);
+    },
+    validQuestion: function(question) {
+      var valid = Boolean(question.text);
+      if (valid) {
+        var choices = question.choices.filter(function(c) {
+          return Boolean(c.text);
+        });
+        valid = Boolean(choices);
+      }
+      return valid;
+    }
+  },
+  mounted: function() {
+    this.addQuestion()
+  }
+})
+</script>
+
+{% endblock %}
+
+
