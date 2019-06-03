@@ -7,11 +7,15 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
-from django.shortcuts import render, redirect, reverse
+from django.db import transaction
+from django.shortcuts import render, redirect, reverse, get_object_or_404
 
 from django.views import View
 
-from .models import Survey, Question, Choice, SurveyAssignment
+from guardian.mixins import PermissionRequiredMixin
+from guardian.shortcuts import assign_perm
+
+from .models import Survey, Question, Choice, SurveyAssignment, SurveyResponse
 
 class RegisterView(View):
     def get(self, request):
@@ -133,11 +137,51 @@ class SurveyCreateView(LoginRequiredMixin, View):
               
         for assignee in assignees:
             assigned_to = User.objects.get(pk=int(assignee))
-            SurveyAssignment.objects.create(
+            assigned_survey = SurveyAssignment.objects.create(
                 survey=survey,
                 assigned_by=request.user,
                 assigned_to=assigned_to
             )
+            assign_perm('view_survey_assginment', assigned_to, assigned_survey)
 
         return redirect(reverse('profile'))
 
+
+class SurveyAssignmentView(PermissionRequiredMixin, View):
+    permission_required = 'survey.view_surveyassignment'
+
+    def get_object(self):
+        self.obj = get_object_or_404(SurveyAssignment, pk=self.kwargs['assignment_id'])
+        return self.obj
+
+    def get(self, request, assignment_id):
+        # survey = Survey.objects.get(pk=survey_id)
+        return render(request, 'survey/survey_assignment.html', {'survey_assignment': self.obj})
+
+    def post(self, request, assignment_id):
+        context = {'validation_error': ''}
+        save_id = transaction.savepoint()
+        try: 
+            for question in self.obj.survey.questions.all():
+                question_field = f"question_{question.id}"
+                if question_field not in request.POST:
+                    context['validation_error'] = 'All questions require an answer'
+                    break
+                
+                choice_id = int(request.POST[question_field])
+                choice = get_object_or_404(Choice, pk=choice_id)
+                SurveyResponse.objects.create(
+                    survey_assigned=self.obj,
+                    question=question,
+                    choice=choice
+                )
+
+            if context['validation_error']:
+                transaction.savepoint_rollback(save_id)
+                return render(request, 'survey/survey_assignment.html', context)
+
+            transaction.savepoint_commit(save_id)
+        except:
+            transaction.savepoint_rollback(save_id)
+
+        return redirect(reverse('profile'))
