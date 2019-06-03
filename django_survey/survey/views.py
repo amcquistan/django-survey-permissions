@@ -185,7 +185,3 @@ class SurveyAssignmentView(PermissionRequiredMixin, View):
             transaction.savepoint_rollback(save_id)
 
         return redirect(reverse('profile'))
-
-
-
-
