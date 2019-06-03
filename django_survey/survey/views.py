@@ -141,17 +141,3 @@ class SurveyCreateView(LoginRequiredMixin, View):
 
         return redirect(reverse('profile'))
 
-
-class SurveyDetailView(LoginRequiredMixin, View):
-    def get(self, request, survey_id):
-        survey = Survey.objects.get(pk=survey_id)
-        return render(request, 'surveys/survey_details.html', {'survey': survey})
-
-    def put(self, request, survey_id):
-        survey = Survey.objects.get(pk=survey_id)
-        return render(request, 'surveys/survey_details.html', {'survey': survey})
-    
-
-
-
-
