@@ -1,0 +1,59 @@
+<!-- survey_assignment.html -->
+{% extends 'survey/base.html' %}
+
+{% block content %}
+
+<section class="section">
+  <div class="container">
+    <h1 class="title has-text-centered">
+      Django Survey
+    </h1>
+
+    <div class="columns">
+      <div class="column is-offset-2 is-8">
+        <h2 class="subtitle is-size-4">
+          Survey: {{ survey_assignment.survey.title }}
+        </h2>
+        {% if validation_error %}
+          <p>{{ validation_error }}</p>
+        {% endif %}
+        <form action="{% url 'survey_assignment' survey_assignment.id %}" method="POST">
+          {% csrf_token %}
+          <ol>
+            {% for question in survey_assignment.survey.questions.all %}
+            <li style="margin-bottom: 20px;">
+              {{ question.text }}
+              
+              {% for choice in question.choices.all %}
+              <div class="control">
+                <label for="choice_{{choice.id}}" class="radio">
+                  <input id="choice_{{choice.id}}" type="radio" name="question_{{question.id}}" value="{{choice.id}}" required>
+                  {{ choice.text }}
+                </label>
+              </div>
+              {% endfor %}
+              
+            </li>
+            {% endfor %}
+          </ol>
+          {% if survey_assignment.survey_responses.count == 0 %}
+          <div class="field">
+            <div class="control">
+              <button class="button is-link">Submit</button>
+            </div>
+          </div>
+          {% else %}
+          <p>You've already completed this survey</p>
+          {% endif %}
+        </form>
+
+      </div>
+    </div>
+
+  </div>
+
+</section>
+
+{% endblock %}
+
+

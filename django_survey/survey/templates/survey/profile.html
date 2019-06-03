@@ -30,7 +30,9 @@
         <div class="content">
           <ul>
             {% for assigned_survey in assgined_surveys %}
-            <li><a href=""></a>{{ assigned_survey.survey.title }}</li>
+            <li>
+              <a href="{% url 'survey_assignment' assigned_survey.id %}">{{ assigned_survey.survey.title }}</a>
+            </li>
             {% endfor %}
           </ul>
         </div>

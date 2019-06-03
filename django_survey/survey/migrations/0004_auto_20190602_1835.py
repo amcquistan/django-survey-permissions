@@ -6,16 +6,15 @@ from django.db import migrations
 from guardian.shortcuts import assign_perm
 from guardian.compat import get_user_model
 
-def add_view_survey_perm_for_survey_assignees(apps, schema_editor):
-    Survey = apps.get_model('survey', 'Survey')
-    surveys = Survey.objects.all()
+def add_view_surveyassginemnt_perms(apps, schema_editor):
+    SurveyAssignment = apps.get_model('survey', 'SurveyAssignment')
+    survey_assignments = SurveyAssignment.objects.all()
     User = get_user_model()
-    for survey in surveys:
-        for assigned_survey in survey.survey_assignments.all():
-            assignee = assigned_survey.assigned_to
-            user = User.objects.get(pk=assignee.id)
-            if not user.has_perm('view_survey', survey):
-                assign_perm('view_survey', user, survey)
+    for assigned_survey in survey_assignments:
+        assignee = assigned_survey.assigned_to
+        user = User.objects.get(pk=assignee.id)
+        if not user.has_perm('view_surveyassignment', assigned_survey):
+            assign_perm('view_surveyassignment', user, assigned_survey)
 
 class Migration(migrations.Migration):
 
@@ -24,5 +23,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(add_view_survey_perm_for_survey_assignees)
+        migrations.RunPython(add_view_surveyassginemnt_perms)
     ]

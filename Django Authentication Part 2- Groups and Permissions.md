@@ -55,15 +55,15 @@ Running migrations:
   Applying guardian.0001_initial... OK
 ```
 
-### Assiging Permissions to Take and View Survey Results
+### Assiging Permissions to Take a Survey
 
-With Django Guardian integrated into the project I can now starting protecting the Survey model with specific permissions. By default Django gives the Survey model already has the view permission associated with it, in fact, the full set of default permissions for Survey are:
-* add_survey
-* change_survey
-* view_survey
-* delete_survey
+With Django Guardian integrated into the project I can now starting protecting the SurveyAssignment model with specific permissions. By default Django gives the Survey model already has the view permission associated with it, in fact, the full set of default permissions for Survey are:
+* add_surveyassignment
+* change_surveyassginment
+* view_surveyassignment
+* delete_surveyassignment
 
-However, in my case I want to apply this permission to the user's who have been assigned to take them at the object instance level rather than the broad model (aka class) level.  This is where Django Guardian comes in. To accomplish this I need to update the SurveyCreateView.post method to give the view_survey permission to the assigned users using the assign_perm(...) function from the guardian.shortcuts module.
+However, in my case I want to apply this permission to the user's who have been assigned to take them at the object instance level rather than the broad model (aka class) level.  This is where Django Guardian comes in. To accomplish this I need to update the SurveyCreateView.post method to give the view_surveyassignment permission to the assigned users using the assign_perm(...) function from the guardian.shortcuts module.
 
 ```
 # survey/views.py
@@ -131,19 +131,19 @@ class SurveyCreateView(LoginRequiredMixin, View):
               
         for assignee in assignees:
             assigned_to = User.objects.get(pk=int(assignee))
-            SurveyAssignment.objects.create(
+            assigned_survey = SurveyAssignment.objects.create(
                 survey=survey,
                 assigned_by=request.user,
                 assigned_to=assigned_to
             )
-            assign_perm('view_survey', assigned_to, survey)
+            assign_perm('view_surveyassginment', assigned_to, assigned_survey)
 
         return redirect(reverse('profile'))
 
 
 ```
 
-The key to this change is the assign_perm('view_survey', assigned_to, survey) which specifically assigns the 'view_survey' permission to the users to the instance of the survey being created.  However, this will only protect the newly created surveys. To update any existing survey's that have been previously created I will need to make a django migration to assign this object instance level permission to the existing survey's and assigned users.
+The key to this change is the assign_perm('view_surveyassginment', assigned_to, assigned_survey) which specifically assigns the 'view_surveyassginment' permission to the users for the instance of the survey assginment being created.  However, this will only protect the newly created surveys. To update any existing survey's that have been previously created I will need to make a django migration to assign this object instance level permission to the existing survey's and assigned users.
 
 To start I create an empty migration script.
 
@@ -164,16 +164,15 @@ from django.db import migrations
 from guardian.shortcuts import assign_perm
 from guardian.compat import get_user_model
 
-def add_view_survey_perm_for_survey_assignees(apps, schema_editor):
-    Survey = apps.get_model('survey', 'Survey')
-    surveys = Survey.objects.all()
+def add_view_surveyassginemnt_perms(apps, schema_editor):
+    SurveyAssignment = apps.get_model('survey', 'SurveyAssignment')
+    survey_assignments = SurveyAssignment.objects.all()
     User = get_user_model()
-    for survey in surveys:
-        for assigned_survey in survey.survey_assignments.all():
-            assignee = assigned_survey.assigned_to
-            user = User.objects.get(pk=assignee.id)
-            if not user.has_perm('view_survey', survey):
-                assign_perm('view_survey', user, survey)
+    for assigned_survey in survey_assignments:
+        assignee = assigned_survey.assigned_to
+        user = User.objects.get(pk=assignee.id)
+        if not user.has_perm('view_surveyassignment', assigned_survey):
+            assign_perm('view_surveyassignment', user, assigned_survey)
 
 class Migration(migrations.Migration):
 
@@ -182,27 +181,126 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(add_view_survey_perm_for_survey_assignees)
+        migrations.RunPython(add_view_surveyassginemnt_perms)
     ]
-
 ```
 
+Next I'd like to add the ability for asigned survey takers to comnplete their surveys. To do this I'll add the SurveyAssignmentView complete with a get method that serves a survey_assignment.html template that displays their assigned survey that they user can fill out. To complement the get method will be post method that will accept posted survey response data and save it to the database. 
 
+Given that I've already established the requirement that a user must be assigned a survey in order to view and, thus complete a survey response, I will also need to guard the SurveyAssignmentView view class which checks to make sure that the requested survey is capable of being viewed by the authenticated user requesting that page.
 
+To guard the SurveyAssignmentView I make it inherit from guardian.mixins.PermissionRequiredMixin which checks that the requesting user is logged in then checks for a specific permission based off how the class is configured.  If either of these checks fail then the user is redirected to the login view. Below is the new SurveyAssignmentView.
 
-create groups for viewing / taking surveys as well as viewing survey results for each new survey object
+```
+# views.py
 
-assign permission to the above groups
+... skipping down to SurveyAssignmentView
 
-add people to the appropriate groups
+class SurveyAssignmentView(PermissionRequiredMixin, View):
+    permission_required = 'survey.view_surveyassignment'
 
-### Add Ability to Take Survey
+    def get_object(self):
+        self.obj = get_object_or_404(SurveyAssignment, pk=self.kwargs['assignment_id'])
+        return self.obj
 
-add SurveyResponseView class for displaying and taking a survey
+    def get(self, request, assignment_id):
+        # survey = Survey.objects.get(pk=survey_id)
+        return render(request, 'survey/survey_assignment.html', {'survey_assignment': self.obj})
 
-Show how to protect the SurveyResponseView class to only those who have been assgined to take a survey
+    def post(self, request, assignment_id):
+        context = {'validation_error': ''}
+        save_id = transaction.savepoint()
+        try: 
+            for question in self.obj.survey.questions.all():
+                question_field = f"question_{question.id}"
+                if question_field not in request.POST:
+                    context['validation_error'] = 'All questions require an answer'
+                    break
+                
+                choice_id = int(request.POST[question_field])
+                choice = get_object_or_404(Choice, pk=choice_id)
+                SurveyResponse.objects.create(
+                    survey_assigned=self.obj,
+                    question=question,
+                    choice=choice
+                )
 
-### Add Ability to see Survey Results
+            if context['validation_error']:
+                transaction.savepoint_rollback(save_id)
+                return render(request, 'survey/survey_assignment.html', context)
+
+            transaction.savepoint_commit(save_id)
+        except:
+            transaction.savepoint_rollback(save_id)
+
+        return redirect(reverse('profile'))
+```
+
+In order to properly configure the SurveyAssignmentView to utilize PermissionRequiredMixin I must set permission_required = 'survey.view_surveyassignment' and provide and implementation of get_object. Under the hood the PermissionRequiredMixin calls its check_permissions method which (suprise suprise) checks the permission specified against the SurveyAssigment object and either returns True and continues onto the request handler or returns False and redirects to the settings.LOGIN_URL specified earlier.
+
+For completeness I have included the survey_assignment.html template below. It simply displays a form of questions and choice radio buttons.
+
+```
+<!-- survey_assignment.html -->
+{% extends 'survey/base.html' %}
+
+{% block content %}
+
+<section class="section">
+  <div class="container">
+    <h1 class="title has-text-centered">
+      Django Survey
+    </h1>
+
+    <div class="columns">
+      <div class="column is-offset-2 is-8">
+        <h2 class="subtitle is-size-4">
+          Survey: {{ survey_assignment.survey.title }}
+        </h2>
+        {% if validation_error %}
+          <p>{{ validation_error }}</p>
+        {% endif %}
+        <form action="{% url 'survey_assignment' survey_assignment.id %}" method="POST">
+          {% csrf_token %}
+          <ol>
+            {% for question in survey_assignment.survey.questions.all %}
+            <li style="margin-bottom: 20px;">
+              {{ question.text }}
+              
+              {% for choice in question.choices.all %}
+              <div class="control">
+                <label for="choice_{{choice.id}}" class="radio">
+                  <input id="choice_{{choice.id}}" type="radio" name="question_{{question.id}}" value="{{choice.id}}" required>
+                  {{ choice.text }}
+                </label>
+              </div>
+              {% endfor %}
+              
+            </li>
+            {% endfor %}
+          </ol>
+          {% if survey_assignment.survey_responses.count == 0 %}
+          <div class="field">
+            <div class="control">
+              <button class="button is-link">Submit</button>
+            </div>
+          </div>
+          {% else %}
+          <p>You've already completed this survey</p>
+          {% endif %}
+        </form>
+
+      </div>
+    </div>
+
+  </div>
+
+</section>
+
+{% endblock %}
+```
+
+### Assign Permissions to View Survey Results
 
 add SurveyResultsView class to display survey results
 
