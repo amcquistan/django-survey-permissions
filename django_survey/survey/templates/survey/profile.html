@@ -1,6 +1,5 @@
 <!-- profile.html -->
 {% extends 'survey/base.html' %}
-{% load widget_tweaks %}
 
 {% block content %}
 
@@ -21,7 +20,7 @@
         <div class="content">
           <ul>
             {% for survey in surveys %}
-            <li><a href="">{{ survey.title }}</a></li>
+            <li><a href="{% url 'survey_management' survey.id %}">{{ survey.title }}</a></li>
             {% endfor %}
           </ul>
         </div>
@@ -37,9 +36,17 @@
           </ul>
         </div>
 
-        <!-- 
+        
         <h3 class="subtitle">Survey Results Shared With You</h3>
-        -->
+        <div class="content">
+          <ul>
+            {% for survey in survey_results %}
+            <li>
+              <a href="{% url 'survey_results' survey.id %}">{{ survey.title }}</a>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
 
       </div>
     </div>
