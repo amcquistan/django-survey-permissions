@@ -248,9 +248,9 @@ class SurveyAssignmentView(PermissionRequiredMixin, View):
 
 
 class QuestionViewModel:
-    def __init__(self, text, choices=[]):
+    def __init__(self, text):
         self.text = text
-        self.choices = choices
+        self.choices = []
 
     def add_survey_response(self, survey_response):
         for choice in self.choices:
