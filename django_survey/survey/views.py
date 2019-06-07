@@ -18,6 +18,7 @@ from guardian.mixins import PermissionRequiredMixin
 from guardian.shortcuts import assign_perm, get_objects_for_user
 
 from .models import Survey, Question, Choice, SurveyAssignment, SurveyResponse
+from .view_models import QuestionViewModel, ChoiceResultViewModel
 
 class RegisterView(View):
     def get(self, request):
@@ -248,9 +249,9 @@ class SurveyAssignmentView(PermissionRequiredMixin, View):
 
 
 class QuestionViewModel:
-    def __init__(self, text, choices=[]):
+    def __init__(self, text):
         self.text = text
-        self.choices = choices
+        self.choices = []
 
     def add_survey_response(self, survey_response):
         for choice in self.choices:
@@ -284,6 +285,12 @@ class SurveyResultsView(PermissionRequiredMixin, View):
                 question_vm.add_survey_response(survey_response)
             
             questions.append(question_vm)
+
+        for question in questions:
+            print(question.text)
+            for choice in question.choices:
+                print(choice.text, choice.responses)
+            print()
 
         context = {'survey': self.obj, 'questions': questions}
         

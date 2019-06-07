@@ -2,3 +2,4 @@ django_survey/db.sqlite3
 *__pycache__
 venv
 blog_posts
+django_survey/.env
