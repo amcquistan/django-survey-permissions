@@ -18,7 +18,6 @@ from guardian.mixins import PermissionRequiredMixin
 from guardian.shortcuts import assign_perm, get_objects_for_user
 
 from .models import Survey, Question, Choice, SurveyAssignment, SurveyResponse
-from .view_models import QuestionViewModel, ChoiceResultViewModel
 
 class RegisterView(View):
     def get(self, request):
