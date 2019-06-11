@@ -9,7 +9,7 @@ The major dependencies for this tutorial series are:
 * Python 3.6
 * Django 2.2
 * social-auth-app-django 3.1
-* django-guardia 1.5
+* django-guardian 1.5
 
 ### Tutorial Sections
 
