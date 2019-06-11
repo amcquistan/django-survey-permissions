@@ -1,1 +1,0 @@
-# Django Authentication Part 2: Groups and Permissions with Django Guardian

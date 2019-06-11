@@ -1,0 +1,50 @@
+<!-- survey_results.html -->
+{% extends 'survey/base.html' %}
+
+{% block content %}
+<section class="section">
+  <div class="container">
+    <h1 class="title has-text-centered">
+      Django Survey
+    </h1>
+
+    <div class="columns">
+      <div class="column is-offset-2 is-8">
+        <h2 class="subtitle">
+          Results for Survey: {{ survey.title }}
+        </h2>
+
+          <ol>
+            {% for question in questions %}
+            <li style="padding-bottom: 25px;">
+              <p>{{ question.text }}</p>
+              <div style="margin-left: 30px;">
+                <table class='table'>
+                  <thead>
+                    <tr>
+                      <td>Choice</td>
+                      <td>Responses</td>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for choice in question.choices %}
+                    <tr>
+                      <td>{{ choice.text }}</td>
+                      <td>{{ choice.responses }}</td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </li>
+            {% endfor %}
+          </ol>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+{% endblock %}
+
+

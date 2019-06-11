@@ -41,6 +41,20 @@
           </div>
 
           <div class="field">
+            <label for="" class="label">Reviewers</label>
+            <div class="control">
+              <div class="select is-multiple">
+                <select multiple size="4" name="reviewers">
+                  {% for user in users %}
+                  <option value="{{ user.id }}">{{ user.username }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <p class="help is-danger">{{ reviewer_error }}</p>
+            </div>
+          </div>
+
+          <div class="field">
             <label for="" class="label">Questions</label>
             <div class="control">
               <a @click.stop="addQuestion" class="button is-info is-small">
