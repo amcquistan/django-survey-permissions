@@ -22,7 +22,7 @@ class Survey(models.Model):
         )
 
     def __str__(self):
-        return f"<Survey: {self.id} {self.title}>"
+        return f"Survey({self.id}): {self.title}"
 
 
 class Question(models.Model):
@@ -36,7 +36,8 @@ class Question(models.Model):
         blank=True,
         related_name='questions'
     )
-
+    def __str__(self):
+        return f"Question({self.id}): {self.text} - {self.survey}" 
 
 class Choice(models.Model):
     text = models.CharField(max_length=300)
@@ -50,6 +51,8 @@ class Choice(models.Model):
         related_name='choices'
     )
 
+    def __str__(self):
+        return f"Choice({self.id}): {self.text} - {self.question}"
 
 class SurveyAssignment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
@@ -77,7 +80,7 @@ class SurveyAssignment(models.Model):
     )
 
     def __str__(self):
-        return f"{self.survey.title}: {self.assigned_to.username}"
+        return f"SurveyAssignment({self.id}): {self.survey}: {self.assigned_to.username}"
 
 
 class SurveyResponse(models.Model):
