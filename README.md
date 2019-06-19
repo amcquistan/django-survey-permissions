@@ -21,5 +21,5 @@ There are tags representing the code's ending state for each article in the tuto
   - [0.0.2 code tag](https://github.com/amcquistan/django-survey-permissions/tree/0.0.2/django_survey)
 * [Django Authentication Part 3: Adding Python Social Auth](https://thecodinginterface.com/blog/django-auth-part3/)
   - [0.0.3 code tag](https://github.com/amcquistan/django-survey-permissions/tree/0.0.3/django_survey)
-  
-  
+* [Django Authentication Part 4: ](https://thecodinginterface.com/blog/django-auth-part4/)
+  - [0.0.4 code tag](https://github.com/amcquistan/django-survey-permissions/tree/0.0.4)
