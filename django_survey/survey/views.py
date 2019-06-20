@@ -1,14 +1,19 @@
 # survey/views.py
 
 import json
-
+from django.conf import settings
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.models import User, Group, Permission
 from django.core.exceptions import ValidationError
+from django.core.mail import EmailMessage
+from django.template.loader import get_template
 from django.db import transaction
 from django.db.models import Q
+from django.http import HttpResponse
+from django.utils.encoding import force_bytes, force_text
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.shortcuts import render, redirect, reverse, get_object_or_404
 
 from django.views import View
@@ -18,23 +23,40 @@ from guardian.mixins import PermissionRequiredMixin
 from guardian.shortcuts import assign_perm, get_objects_for_user
 
 from .models import Survey, Question, Choice, SurveyAssignment, SurveyResponse
+from .tokens import user_tokenizer
+from .forms import RegistrationForm
 
 class RegisterView(View):
     def get(self, request):
-        return render(request, 'survey/register.html', { 'form': UserCreationForm() })
+        return render(request, 'survey/register.html', { 'form': RegistrationForm() })
 
     def post(self, request):
-        form = UserCreationForm(request.POST)
+        form = RegistrationForm(request.POST)
         if form.is_valid():
-            user = form.save()
-            return redirect(reverse('login'))
+            user = form.save(commit=False)
+            user.is_valid = False
+            user.save()
+            token = user_tokenizer.make_token(user)
+            user_id = urlsafe_base64_encode(force_bytes(user.id))
+            url = 'http://localhost:8000' + reverse('confirm_email', kwargs={'user_id': user_id, 'token': token})
+            message = get_template('survey/register_email.html').render({
+              'confirm_url': url
+            })
+            mail = EmailMessage('Django Survey Email Confirmation', message, to=[user.email], from_email=settings.EMAIL_HOST_USER)
+            mail.content_subtype = 'html'
+            mail.send()
+
+            return render(request, 'survey/login.html', {
+              'form': AuthenticationForm(),
+              'message': f'A confirmation email has been sent to {user.email}. Please confirm to finish registering'
+            })
 
         return render(request, 'survey/register.html', { 'form': form })
 
 # this view class was replaced by django.contrib.auth.views.LoginView
 class LoginView(View):
     def get(self, request):
-        return render(request, 'survey/login.html', { 'form':  AuthenticationForm })
+        return render(request, 'survey/login.html', { 'form':  AuthenticationForm() })
 
     # really low level
     # def post(self, request):
@@ -295,3 +317,35 @@ class SurveyResultsView(PermissionRequiredMixin, View):
         
         return render(request, 'survey/survey_results.html', context)
 
+
+class TestEmail(View):
+    def get(self, request):
+        user = User.objects.get(pk=9)
+        token = user_tokenizer.make_token(user)
+        user_id = urlsafe_base64_encode(force_bytes(user.id))
+        url = 'http://localhost:8000' + reverse('confirm_email', kwargs={'user_id': user_id, 'token': token})
+        message = get_template('survey/register_email.html').render({
+          'confirm_url': url
+        })
+        mail = EmailMessage('Django Survey Email Confirmation', message, to=[user.email], from_email=settings.EMAIL_HOST_USER)
+        mail.content_subtype = 'html'
+        mail.send()
+        return HttpResponse(f'email sent user_id = {user_id}, token = {token}')
+
+
+class ConfirmRegistrationView(View):
+    def get(self, request, user_id, token):
+        user_id = force_text(urlsafe_base64_decode(user_id))
+        
+        user = User.objects.get(pk=user_id)
+
+        context = {
+          'form': AuthenticationForm(),
+          'message': 'Registration confirmation error . Please click the reset password to generate a new confirmation email.'
+        }
+        if user and user_tokenizer.check_token(user, token):
+            user.is_valid = True
+            user.save()
+            context['message'] = 'Registration complete. Please login'
+
+        return render(request, 'survey/login.html', context)
