@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'widget_tweaks',
     'guardian',
     'social_django',
+    'rest_framework',
 ]
 
 MIDDLEWARE = [
